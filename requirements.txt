@@ -1,0 +1,4 @@
+peewee==3.17.6
+psycopg2-binary==2.9.9
+peewee-migrate==1.12.2
+bcrypt==4.2.0
