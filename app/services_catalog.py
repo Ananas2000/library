@@ -32,13 +32,8 @@ def _generate_next_inventory_code(prefix: str = "INV-", width: int = 4) -> str:
     return f"{prefix}{str(max_n + 1).zfill(width)}"
 
 
-# -------------------
-# AUTHORS
-# -------------------
+# Авторы
 def list_authors() -> List[Dict[str, Any]]:
-    """
-    Справочник авторов для GUI: id + full_name.
-    """
     q = Author.select(Author.id, Author.full_name).order_by(Author.full_name.asc())
     return list(q.dicts())
 
@@ -51,9 +46,6 @@ def get_book_author_ids(book_id: int) -> List[int]:
 
 
 def _authors_subquery():
-    """
-    Подзапрос: book_id -> "Автор1, Автор2"
-    """
     return (
         BookAuthor
         .select(
@@ -67,9 +59,6 @@ def _authors_subquery():
 
 
 def _reader_stats_subquery():
-    """
-    Подзапрос: book_id -> available_count + ближайшая due_date по open/overdue
-    """
     avail_count = fn.SUM(
         Case(None, ((Copy.status == "available", 1),), 0)
     ).alias("available_count")
@@ -108,9 +97,6 @@ def list_locations() -> List[Dict[str, Any]]:
 
 # ---------- книги ----------
 def list_books() -> List[Dict[str, Any]]:
-    """
-    Для staff/admin: книга + издательство + авторы.
-    """
     ba = _authors_subquery()
 
     q = (Book
@@ -127,9 +113,6 @@ def list_books() -> List[Dict[str, Any]]:
 
 
 def list_books_reader_view() -> List[Dict[str, Any]]:
-    """
-    Для читателя: книга + авторы + издательство + сколько available + ближайшая due_date
-    """
     ba = _authors_subquery()
     st = _reader_stats_subquery()
 

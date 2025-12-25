@@ -992,7 +992,7 @@ class MainWindow(tk.Tk):
 
         ttk.Label(
             box2,
-            text="ВНИМАНИЕ: восстановление перезатрёт текущую базу (clean). Лучше после этого перезапустить приложение.",
+            text="ВНИМАНИЕ: восстановление перезатрёт текущую базу (clean).",
             foreground="#a00"
         ).grid(row=1, column=0, columnspan=3, sticky="w", pady=(8, 0))
 
