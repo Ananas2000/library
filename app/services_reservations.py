@@ -1,11 +1,42 @@
 from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta
+import json
 
 from peewee import fn, JOIN
 
 from app.db import db
-from app.models import Reservation, Copy, Location, Branch, Book, Loan, User
+from app.models import Reservation, Copy, Location, Branch, Book, Loan, User, Role, UserRole
+
+
+def _user_is_admin(user: User) -> bool:
+    """Админ определяется не только по имени роли, но и по праву all=true."""
+    q = (
+        Role.select(Role.name, Role.rights)
+        .join(UserRole)
+        .where(UserRole.user == user)
+    )
+
+    for r in q:
+        if r.name == "Admin":
+            return True
+
+        rights = r.rights
+        if isinstance(rights, dict):
+            if rights.get("all") is True:
+                return True
+        elif isinstance(rights, str):
+            s = rights.strip()
+            if s:
+                try:
+                    obj = json.loads(s)
+                    if isinstance(obj, dict) and obj.get("all") is True:
+                        return True
+                except Exception:
+                    pass
+
+    return False
+
 
 ACTIVE_LOAN_STATUSES = ("open", "overdue")
 
@@ -150,7 +181,8 @@ def cancel_reservation(reader: User, reservation_id: int):
         res = Reservation.get_or_none(Reservation.id == reservation_id)
         if not res:
             return False, "Резерв не найден."
-        if res.reader_id != reader.id:
+        # Владелец может отменять свой резерв; админ может отменять любой.
+        if res.reader_id != reader.id and not _user_is_admin(reader):
             return False, "Это не ваш резерв."
         if res.status != "active":
             return False, "Резерв уже не активен."
@@ -169,7 +201,8 @@ def extend_reservation(reader: User, reservation_id: int):
         res = Reservation.get_or_none(Reservation.id == reservation_id)
         if not res:
             return False, "Резерв не найден."
-        if res.reader_id != reader.id:
+        # Владелец может продлевать свой резерв; админ может продлевать любой.
+        if res.reader_id != reader.id and not _user_is_admin(reader):
             return False, "Это не ваш резерв."
         if res.status != "active":
             return False, "Резерв уже не активен."
